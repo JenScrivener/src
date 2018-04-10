@@ -174,7 +174,7 @@ void RFM95_Set_Bandwidth(uint8_t BW){
 uint8_t RFM95_Get_Bandwidth(void){
 
 	uint8_t BW=0;
-	RFM95_Reg_Read(RFM95_REG_1D_MODEM_CONFIG1, &BW, 1);			//current value of the registor
+	RFM95_Reg_Read(RFM95_REG_1D_MODEM_CONFIG1, &BW, 1);				//current value of the registor
 	BW&=RFM95_BW;
 	BW=BW>>4;
 	return(BW);
@@ -188,6 +188,7 @@ void RFM95_Set_Output_Power(uint8_t OPP){
 	OPP&=RFM95_OUTPUT_POWER;
 	temp&=!RFM95_OUTPUT_POWER;										//clear the current OPP
 	OPP|=temp;														//set the new OPP
+	OPP|=RFM95_PA_SELECT;											//set PA_BOOST
 	RFM95_Reg_Write(RFM95_REG_09_PA_CONFIG, &OPP, 1);
 }
 
