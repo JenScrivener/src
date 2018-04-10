@@ -7,8 +7,7 @@
 
 #include "RFM95.h"
 
-volatile uint8_t GOODTX=0;
-volatile uint8_t GOODRX=0;
+int timer=1000;
 
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len){		//Write len bytes of data to reg
 
@@ -234,6 +233,10 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 
 }
 
+void SysTick_Handler(void){
+	timer--;
+}
+
 void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressing
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_STDBY);			//Enter stand by mode
@@ -316,43 +319,44 @@ uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
 	return(data);
 }
 
-void EXTI2_IRQHandler(void) {
-	uint8_t IRQ_Flags;
-	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
-	if(IRQ_Flags&RFM95_RX_TIMEOUT || IRQ_Flags&RFM95_PAYLOAD_CRC_ERROR){
-		// Bad RX
-		Clear_Flags();
-	}
-	else if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
-		//recieve data
-
-		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
-		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
-		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
-
-		uint8_t len =0;
-		RFM95_Reg_Read(RFM95_REG_22_PAYLOAD_LENGTH,&len,1);
-
-		uint8_t *buf = (uint8_t*) malloc(len);
-		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
-
-		burstSerial(buf,len);
-		free(buf);
-
-		Clear_Flags();
-
-	}
-	else if(IRQ_Flags&RFM95_TX_DONE){
-		//finish sending
-		GOODTX=1;
-
-		Clear_Flags();
-	}
-	else{
-		Clear_Flags();
-	}
-}
+//void EXTI2_IRQHandler(void) {
+//	uint8_t IRQ_Flags;
+//	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+//
+//	if(IRQ_Flags&RFM95_RX_TIMEOUT || IRQ_Flags&RFM95_PAYLOAD_CRC_ERROR){
+//		// Bad RX
+//		Clear_Flags();
+//	}
+//	else if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
+//		//recieve data
+//
+//		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
+//		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
+//		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
+//
+//		uint8_t len =0;
+//		RFM95_Reg_Read(RFM95_REG_22_PAYLOAD_LENGTH,&len,1);
+//
+//		uint8_t *buf = (uint8_t*) malloc(len);
+//		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
+//
+//		burstSerial(buf,len);
+//		free(buf);
+//
+//		Clear_Flags();
+//
+//	}
+//	else if(IRQ_Flags&RFM95_TX_DONE){
+//		//finish sending
+//		GOODTX=1;
+//
+//		Clear_Flags();
+//	}
+//	else{
+//		Clear_Flags();
+//	}
+//}
 
 void Clear_Flags(void){
 
@@ -363,3 +367,49 @@ void Clear_Flags(void){
 
 	EXTI_ClearFlag(EXTI_Line2);										//clear flags on STM
 }
+
+void ping(void){
+#define ping
+
+	uint8_t data=0;
+	char serial[80]="waiting for signal";
+	while(1){
+
+		if(timer<0){
+			GPIO_SetBits(GPIOD,GPIO_Pin_12);
+			RFM95_LoRa_Test_Send2(&data, 1);
+			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
+			burstSerial(&serial, strlen(serial));
+			timer=1000;
+
+			RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
+		}
+		else{
+			//wait
+		}
+	}
+}
+
+#ifdef ping
+
+void EXTI2_IRQHandler(void) {
+	uint8_t IRQ_Flags;
+	uint8_t rssi=0;
+	int RSSI=0;
+	char serial[80];
+
+	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+	if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
+		RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE , &rssi, 1);
+		RSSI=rssi-157;
+		sprintf(serial, "RSSI = %d" , RSSI);
+		burstSerial(&serial, strlen(serial));
+		Clear_Flags();
+		timer=1000;
+
+		RFM95_LoRa_Test_Send2(&rssi, 1);
+		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
+	}
+}
+
+#endif /* ping */

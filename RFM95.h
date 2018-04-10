@@ -13,6 +13,8 @@
 #include "SPI.h"
 #include "EXTI.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len);		//Write len bytes of data to reg
 void RFM95_Reg_Read(uint8_t Reg, uint8_t* Data, uint8_t Len);		//Read len bytes of data from reg
@@ -47,7 +49,10 @@ void RFM95_LoRa_Test_Send3(void);									//Resend last transmision (requires im
 uint8_t RFM95_LoRa_Test_Recieve(void);								//Recieve one byte (flash LEDs with STM32F411 discover board)
 void RFM95_LoRa_Test_Recieve2(void);
 void EXTI2_IRQHandler(void);
+void SysTick_Handler(void);
 void Clear_Flags(void);
+
+void ping(void);
 
 //Register addresses from table 85 Semtech (HopeRF doesn't have an RX current 0x10)
 #define RFM95_REG_00_FIFO                                0x00

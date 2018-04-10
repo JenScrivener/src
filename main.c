@@ -8,6 +8,8 @@
 void init(void);
 void flash (void);
 
+//Test
+
 int count=0;
 
 int main(void){
@@ -15,11 +17,7 @@ int main(void){
 
 	init();
 
-	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);	//Enter RX continuous mode
-
-	while(1){
-		//sit back and wait for the packets to arrive
-	}
+	ping();
 
 
 }
@@ -55,6 +53,7 @@ void init(void){
 	initUserButtonEXTI0();
 	initLoRaFlagEXTI2();
 	initUART2();
+	SysTick_Config(83990);	//2ms per trigger
 
 }
 
