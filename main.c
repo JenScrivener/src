@@ -16,6 +16,7 @@ int main(void){
 
 
 	init();
+	RFM95_LoRa_Init2(915, 0x0C, RFM95_CODING_RATE_4_8, RFM95_SPREADING_FACTOR_128CPS, RFM95_BW_500KHZ, 15);
 
 	ping();
 
@@ -46,9 +47,6 @@ void init(void){
 	GPIO_SetBits(GPIOD, GPIO_Pin_12);
 
 	initSPI2();
-
-	//void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower);
-	RFM95_LoRa_Init2(915, 0x0C, RFM95_CODING_RATE_4_5, RFM95_SPREADING_FACTOR_128CPS, RFM95_BW_500KHZ, 0);
 
 	initUserButtonEXTI0();
 	initLoRaFlagEXTI2();
