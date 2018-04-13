@@ -200,6 +200,77 @@ uint8_t RFM95_Get_Output_Power(void){
 	return(OPP);
 }
 
+void RFM95_Set_Hop_Period(uint8_t HP){
+
+	RFM95_Reg_Write(RFM95_REG_24_HOP_PERIOD , &HP, 1);
+}
+
+uint8_t RFM95_Get_Hop_Period(void){
+
+	uint8_t HP=0;
+	RFM95_Reg_Read(RFM95_REG_24_HOP_PERIOD , &HP, 1);
+	return(HP);
+}
+
+void RFM95_DIO_MapReg1(uint8_t DIO, uint8_t Map){
+	uint8_t map =0;
+
+	RFM95_Reg_Read(RFM95_REG_40_DIO_MAPPING1 , &map, 1);
+	map=map&!DIO;
+	Map=Map&0x03;
+	DIO=DIO/3;
+	while(DIO!=1){
+		DIO=DIO>>2;
+		Map=Map<<2;
+	}
+	Map=Map|map;
+	RFM95_Reg_Read(RFM95_REG_40_DIO_MAPPING1 , &Map, 1);
+
+}
+
+void RFM95_DIO_MapReg2(uint8_t DIO, uint8_t Map){
+	uint8_t map =0;
+
+	RFM95_Reg_Read(RFM95_REG_41_DIO_MAPPING2 , &map, 1);
+	map=map&!DIO;
+	Map=Map&0x03;
+	DIO=DIO/3;
+	while(DIO!=1){
+		DIO=DIO>>2;
+		Map=Map<<2;
+	}
+	Map=Map|map;
+	RFM95_Reg_Read(RFM95_REG_41_DIO_MAPPING2 , &Map, 1);
+
+}
+
+uint8_t RFM95_Get_DIO_MapReg1(uint8_t DIO){
+	uint8_t map =0;
+
+	RFM95_Reg_Read(RFM95_REG_40_DIO_MAPPING1 , &map, 1);
+	map=map&DIO;
+	DIO=DIO/3;
+	while(DIO!=1){
+		DIO=DIO>>2;
+		map=map>>2;
+	}
+	return (map);
+
+}
+
+uint8_t RFM95_Get_DIO_MapReg2(uint8_t DIO){
+	uint8_t map =0;
+
+	RFM95_Reg_Read(RFM95_REG_41_DIO_MAPPING2 , &map, 1);
+	map=map&DIO;
+	DIO=DIO/3;
+	while(DIO!=1){
+		DIO=DIO>>2;
+		map=map>>2;
+	}
+	return (map);
+}
+
 void RFM95_LoRa_Init(double Freq){									//Use default settings for all registers except for frequency registors.
 
 	uint8_t mode = RFM95_LONG_RANGE_MODE;
@@ -208,7 +279,6 @@ void RFM95_LoRa_Init(double Freq){									//Use default settings for all regist
 	RFM95_Set_Mode(mode);
 	RFM95_Set_Mode(mode);
 	RFM95_Set_Freq(Freq);
-	RFM95_Set_Coding_Rate(RFM95_CODING_RATE_4_6);
 
 }
 
@@ -232,6 +302,9 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 	mode|=RFM95_IMPLICIT_HEADER_MODE_ON;
 	RFM95_Reg_Write(RFM95_REG_1D_MODEM_CONFIG1, &mode, 1);
 
+	RFM95_DIO_MapReg1(RFM95_DIO0,3);
+	RFM95_Set_Hop_Period(1);
+
 }
 
 void SysTick_Handler(void){
@@ -250,12 +323,12 @@ void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressin
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
 
-	uint8_t txdone=0;
-	while(!txdone){
-		RFM95_Reg_Read(0x12, &txdone, 1);
-	}
+//	uint8_t txdone=0;
+//	while(!txdone){
+//		RFM95_Reg_Read(0x12, &txdone, 1);
+//	}
 
-	Clear_Flags();
+	Clear_Flags2();
 }
 
 void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
@@ -278,7 +351,7 @@ void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
 		RFM95_Reg_Read(0x12, &txdone, 1);
 	}
 
-	Clear_Flags();
+	Clear_Flags2();
 }
 
 void RFM95_LoRa_Test_Send3(void){									//Resend last transmision (requires implicit header mode and FifoTxPtrBase=0x80)
@@ -293,7 +366,7 @@ void RFM95_LoRa_Test_Send3(void){									//Resend last transmision (requires im
 		RFM95_Reg_Read(0x12, &txdone, 1);
 	}
 
-	Clear_Flags();
+	Clear_Flags2();
 }
 
 uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
@@ -327,7 +400,7 @@ uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
 //
 //	if(IRQ_Flags&RFM95_RX_TIMEOUT || IRQ_Flags&RFM95_PAYLOAD_CRC_ERROR){
 //		// Bad RX
-//		Clear_Flags();
+//		Clear_Flags2();
 //	}
 //	else if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
 //		//recieve data
@@ -345,21 +418,31 @@ uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
 //		burstSerial(buf,len);
 //		free(buf);
 //
-//		Clear_Flags();
+//		Clear_Flags2();
 //
 //	}
 //	else if(IRQ_Flags&RFM95_TX_DONE){
 //		//finish sending
 //		GOODTX=1;
 //
-//		Clear_Flags();
+//		Clear_Flags2();
 //	}
 //	else{
-//		Clear_Flags();
+//		Clear_Flags2();
 //	}
 //}
 
-void Clear_Flags(void){
+void Clear_Flags1(void){
+
+	uint8_t IRQ_Flags=0xff;											//clear flags on LoRa Radio
+	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
+	IRQ_Flags=0x00;
+	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
+
+	EXTI_ClearFlag(EXTI_Line1);										//clear flags on STM
+}
+
+void Clear_Flags2(void){
 
 	uint8_t IRQ_Flags=0xff;											//clear flags on LoRa Radio
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
@@ -380,7 +463,7 @@ void ping(void){
 			GPIO_SetBits(GPIOD,GPIO_Pin_12);
 			RFM95_LoRa_Test_Send2(&data, 1);
 			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
-			burstSerial(&serial, strlen(serial));
+			burstSerial(&serial[0], strlen(serial));
 			timer=1000;
 
 			RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
@@ -404,13 +487,29 @@ void EXTI2_IRQHandler(void) {
 		RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE , &rssi, 1);
 		RSSI=rssi-157;
 		sprintf(serial, "RSSI = %d" , RSSI);
-		burstSerial(&serial, strlen(serial));
-		Clear_Flags();
+		burstSerial(&serial[0], strlen(serial));
+		Clear_Flags2();
 		timer=1000;
 
 		RFM95_LoRa_Test_Send2(&rssi, 1);
 		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 	}
+	else if(IRQ_Flags&RFM95_TX_DONE){
+		Clear_Flags2();
+	}
+
 }
 
 #endif /* ping */
+
+void EXTI1_IRQHandler(void) {
+	uint8_t IRQ_Flags;
+	char serial[80];
+
+	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+	if(IRQ_Flags&RFM95_FHSS_CHANGE_CHANNEL){
+		sprintf(serial, "hop channel");
+		burstSerial(&serial[0], strlen(serial));
+		Clear_Flags1();
+	}
+}

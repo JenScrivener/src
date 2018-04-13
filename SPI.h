@@ -18,6 +18,6 @@ void initSPI2(void);
 void initUART2(void);
 uint8_t SPI_Send(uint8_t Data);
 void serial(uint8_t Data);
-void burstSerial(uint8_t *Data, uint8_t Len);
+void burstSerial(char *Data, uint8_t Len);
 
 #endif /* SPI_H_ */

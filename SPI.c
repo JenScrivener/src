@@ -158,7 +158,7 @@ void serial(uint8_t Data){
 	while( !(USART2->SR & USART_FLAG_TXE) ); 	// wait until transmit complete
 }
 
-void burstSerial(uint8_t *Data, uint8_t Len){
+void burstSerial(char *Data, uint8_t Len){
 	for(int x=0;x<Len;x++){
 
 		serial(*Data);

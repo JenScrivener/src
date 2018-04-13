@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len);		//Write len bytes of data to reg
 void RFM95_Reg_Read(uint8_t Reg, uint8_t* Data, uint8_t Len);		//Read len bytes of data from reg
@@ -40,6 +41,12 @@ uint8_t RFM95_Get_Bandwidth(void);
 void RFM95_Set_Output_Power(uint8_t OPP);
 uint8_t RFM95_Get_Output_Power(void);
 
+void RFM95_Set_Hop_Period(uint8_t HP);
+uint8_t RFM95_Get_Hop_Period(void);
+
+void RFM95_DIO_Map(uint8_t DIO, uint8_t Map);
+uint8_t RFM95_Get_DIO_Map(uint8_t DIO);
+
 void RFM95_LoRa_Init(double Freq);									//Use default settings for all registers except for frequency registors.
 void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower);
 
@@ -48,9 +55,11 @@ void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len);
 void RFM95_LoRa_Test_Send3(void);									//Resend last transmision (requires implicit header mode and FifoTxPtrBase=0x80)
 uint8_t RFM95_LoRa_Test_Recieve(void);								//Recieve one byte (flash LEDs with STM32F411 discover board)
 void RFM95_LoRa_Test_Recieve2(void);
+void EXTI1_IRQHandler(void);
 void EXTI2_IRQHandler(void);
 void SysTick_Handler(void);
-void Clear_Flags(void);
+void Clear_Flags1(void);
+void Clear_Flags2(void);
 
 void ping(void);
 
@@ -245,6 +254,17 @@ void ping(void);
 #define RFM95_PAYLOAD_CRC_ON                        0x04
 
 #define RFM95_SYM_TIMEOUT_MSB                       0x03
+
+// RFM95_REG_40_DIO_MAPPING1
+#define RFM95_DIO0									0xc0
+#define RFM95_DIO1									0x30
+#define RFM95_DIO2									0x0c
+#define RFM95_DIO3									0x03
+
+// RFM95_REG_41_DIO_MAPPING2
+#define RFM95_DIO4									0xc0
+#define RFM95_DIO5									0x30
+#define RFM95_Map_Preamble_Detect					0x01
 
 // RFM95_REG_4B_TCXO                                0x4b
 #define RFM95_TCXO_TCXO_INPUT_ON                    0x10
