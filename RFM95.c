@@ -323,7 +323,6 @@ void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressin
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
 
-	RFM95_DIO_MapReg1(RFM95_DIO0,3);
 //	uint8_t txdone=0;
 //	while(!txdone){
 //		RFM95_Reg_Read(0x12, &txdone, 1);
@@ -441,8 +440,9 @@ void Clear_Flags1(void){
 
 	EXTI_ClearFlag(EXTI_Line1);										//clear flags on STM
 
+	RFM95_Reg_Read(RFM95_REG_01_OP_MODE , &IRQ_Flags, 1);
 	char serial[80];
-	sprintf(serial, "hop");
+	sprintf(serial, "hop. %d", IRQ_Flags);
 	burstSerial(&serial[0], strlen(serial));
 }
 
@@ -499,14 +499,12 @@ void EXTI2_IRQHandler(void) {
 		timer=1000;
 
 		RFM95_LoRa_Test_Send(rssi);
-		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 	}
 	if(IRQ_Flags&RFM95_TX_DONE){
-		Clear_Flags2();
-	}
-	if(IRQ_Flags&RFM95_FHSS_CHANGE_CHANNEL){
-		sprintf(serial, "CHop");
+		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
+		sprintf(serial, "tx");
 		burstSerial(&serial[0], strlen(serial));
+		Clear_Flags2();
 	}
 
 }
@@ -515,7 +513,6 @@ void EXTI2_IRQHandler(void) {
 
 void EXTI1_IRQHandler(void) {
 	uint8_t IRQ_Flags;
-	char serial[80];
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 	if(IRQ_Flags&RFM95_FHSS_CHANGE_CHANNEL){
