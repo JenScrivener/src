@@ -224,7 +224,7 @@ void RFM95_DIO_MapReg1(uint8_t DIO, uint8_t Map){
 		Map=Map<<2;
 	}
 	Map=Map|map;
-	RFM95_Reg_Read(RFM95_REG_40_DIO_MAPPING1 , &Map, 1);
+	RFM95_Reg_Write(RFM95_REG_40_DIO_MAPPING1 , &Map, 1);
 
 }
 
@@ -240,7 +240,7 @@ void RFM95_DIO_MapReg2(uint8_t DIO, uint8_t Map){
 		Map=Map<<2;
 	}
 	Map=Map|map;
-	RFM95_Reg_Read(RFM95_REG_41_DIO_MAPPING2 , &Map, 1);
+	RFM95_Reg_Write(RFM95_REG_41_DIO_MAPPING2 , &Map, 1);
 
 }
 
@@ -303,7 +303,7 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 	RFM95_Reg_Write(RFM95_REG_1D_MODEM_CONFIG1, &mode, 1);
 
 	RFM95_DIO_MapReg1(RFM95_DIO0,3);
-	RFM95_Set_Hop_Period(1);
+	RFM95_Set_Hop_Period(2);
 
 }
 
@@ -323,12 +323,13 @@ void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressin
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
 
+	RFM95_DIO_MapReg1(RFM95_DIO0,3);
 //	uint8_t txdone=0;
 //	while(!txdone){
 //		RFM95_Reg_Read(0x12, &txdone, 1);
 //	}
+//	Clear_Flags2();
 
-	Clear_Flags2();
 }
 
 void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
@@ -434,19 +435,23 @@ uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
 
 void Clear_Flags1(void){
 
-	uint8_t IRQ_Flags=0xff;											//clear flags on LoRa Radio
+	uint8_t IRQ_Flags=RFM95_FHSS_CHANGE_CHANNEL_MASK;				//clear flags on LoRa Radio
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
-	IRQ_Flags=0x00;
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
 
 	EXTI_ClearFlag(EXTI_Line1);										//clear flags on STM
+
+	char serial[80];
+	sprintf(serial, "hop");
+	burstSerial(&serial[0], strlen(serial));
 }
 
 void Clear_Flags2(void){
 
-	uint8_t IRQ_Flags=0xff;											//clear flags on LoRa Radio
+	uint8_t IRQ_Flags=0;
+
+	IRQ_Flags=RFM95_TX_DONE_MASK | RFM95_RX_DONE_MASK | RFM95_VALID_HEADER_MASK;											//clear flags on LoRa Radio
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
-	IRQ_Flags=0x00;
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
 
 	EXTI_ClearFlag(EXTI_Line2);										//clear flags on STM
@@ -461,10 +466,11 @@ void ping(void){
 
 		if(timer<0){
 			GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			RFM95_LoRa_Test_Send2(&data, 1);
+			RFM95_LoRa_Test_Send(data);
 			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
+			sprintf(serial, "waiting for signal.");
 			burstSerial(&serial[0], strlen(serial));
-			timer=1000;
+			timer=5000;
 
 			RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 		}
@@ -483,6 +489,7 @@ void EXTI2_IRQHandler(void) {
 	char serial[80];
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+
 	if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
 		RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE , &rssi, 1);
 		RSSI=rssi-157;
@@ -491,11 +498,15 @@ void EXTI2_IRQHandler(void) {
 		Clear_Flags2();
 		timer=1000;
 
-		RFM95_LoRa_Test_Send2(&rssi, 1);
+		RFM95_LoRa_Test_Send(rssi);
 		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 	}
-	else if(IRQ_Flags&RFM95_TX_DONE){
+	if(IRQ_Flags&RFM95_TX_DONE){
 		Clear_Flags2();
+	}
+	if(IRQ_Flags&RFM95_FHSS_CHANGE_CHANNEL){
+		sprintf(serial, "CHop");
+		burstSerial(&serial[0], strlen(serial));
 	}
 
 }
@@ -508,8 +519,6 @@ void EXTI1_IRQHandler(void) {
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 	if(IRQ_Flags&RFM95_FHSS_CHANGE_CHANNEL){
-		sprintf(serial, "hop channel");
-		burstSerial(&serial[0], strlen(serial));
 		Clear_Flags1();
 	}
 }

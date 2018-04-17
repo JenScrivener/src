@@ -16,7 +16,7 @@ int main(void){
 
 
 	init();
-	RFM95_LoRa_Init2(915, 0x0C, RFM95_CODING_RATE_4_8, RFM95_SPREADING_FACTOR_128CPS, RFM95_BW_500KHZ, 15);
+	RFM95_LoRa_Init2(915, 0x0C, RFM95_CODING_RATE_4_8, RFM95_SPREADING_FACTOR_4096CPS, RFM95_BW_500KHZ, 15);
 
 	ping();
 
@@ -49,6 +49,7 @@ void init(void){
 	initSPI2();
 
 	initUserButtonEXTI0();
+	initLoRaFlagEXTI1();
 	initLoRaFlagEXTI2();
 	initUART2();
 	SysTick_Config(83990);	//2ms per trigger
