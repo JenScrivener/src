@@ -440,17 +440,11 @@ void Clear_Flags1(void){
 
 	EXTI_ClearFlag(EXTI_Line1);										//clear flags on STM
 
-	RFM95_Reg_Read(RFM95_REG_01_OP_MODE , &IRQ_Flags, 1);
-	char serial[80];
-	sprintf(serial, "hop. %d", IRQ_Flags);
-	burstSerial(&serial[0], strlen(serial));
 }
 
 void Clear_Flags2(void){
 
-	uint8_t IRQ_Flags=0;
-
-	IRQ_Flags=RFM95_TX_DONE_MASK | RFM95_RX_DONE_MASK | RFM95_VALID_HEADER_MASK;											//clear flags on LoRa Radio
+	uint8_t IRQ_Flags=RFM95_TX_DONE_MASK | RFM95_RX_DONE_MASK | RFM95_VALID_HEADER_MASK;											//clear flags on LoRa Radio
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
 	RFM95_Reg_Write(RFM95_REG_12_IRQ_FLAGS , &IRQ_Flags, 1);
 
@@ -516,6 +510,19 @@ void EXTI1_IRQHandler(void) {
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 	if(IRQ_Flags&RFM95_FHSS_CHANGE_CHANNEL){
+		Hop();
 		Clear_Flags1();
 	}
+}
+
+void Hop (void){
+	uint8_t hop;
+	char serial[80];
+
+	RFM95_Reg_Read(RFM95_REG_1C_HOP_CHANNEL, &hop, 1);
+	hop&=RFM95_FHSS_PRESENT_CHANNEL;
+
+	double freq = 915.25;
+	sprintf(serial, "%d" , freq); //(915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop-1))
+	burstSerial(&serial[0], strlen(serial));
 }

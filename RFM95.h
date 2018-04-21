@@ -57,6 +57,7 @@ uint8_t RFM95_LoRa_Test_Recieve(void);								//Recieve one byte (flash LEDs wit
 void RFM95_LoRa_Test_Recieve2(void);
 void EXTI1_IRQHandler(void);
 void EXTI2_IRQHandler(void);
+void Hop(void);
 void SysTick_Handler(void);
 void Clear_Flags1(void);
 void Clear_Flags2(void);
@@ -276,5 +277,29 @@ void ping(void);
 // Constants
 #define XOSC										32		//32MHz
 #define RFM95_WRITE									0x80
+#define LIPD_BW										0.5		//MHz
+#define LIPD_Gap									0.158	//MHz
+
+////Hopping Centre Frequencies (MHz)
+//#define Channel1									915.3
+//#define Channel2									915.9
+//#define Channel3									916.6
+//#define Channel4									917.2
+//#define Channel5									917.9
+//#define Channel6									918.5
+//#define Channel7									919.2
+//#define Channel8									919.9
+//#define Channel9									920.5
+//#define Channel10									921.2
+//#define Channel11									921.8
+//#define Channel12									922.5
+//#define Channel13									923.1
+//#define Channel14									923.8
+//#define Channel15									924.5
+//#define Channel16									925.1
+//#define Channel17									925.8
+//#define Channel18									926.4
+//#define Channel19									927.1
+//#define Channel20									927.7
 
 #endif /* RFM95_H_ */
