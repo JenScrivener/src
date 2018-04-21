@@ -301,7 +301,7 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 	RFM95_Reg_Write(RFM95_REG_1D_MODEM_CONFIG1, &mode, 1);
 
 	RFM95_DIO_MapReg1(RFM95_DIO0,3);
-	RFM95_Set_Hop_Period(30);
+	RFM95_Set_Hop_Period(3);
 
 }
 
@@ -530,8 +530,6 @@ void ping2(void){
 
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
-	double test;
-	char serial[80];
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
@@ -554,12 +552,7 @@ void EXTI2_IRQHandler(void){
 	}
 
 	if(IRQ_Flags&RFM95_TX_DONE){
-		sprintf(serial, "%0.3f",RFM95_Get_Freq());
-		burstSerial(&serial[0], strlen(serial));
-		RFM95_Set_Freq(915.908);
-		test = RFM95_Get_Freq();
-		sprintf(serial, "%0.3f",RFM95_Get_Freq());
-		burstSerial(&serial[0], strlen(serial));
+		RFM95_Set_Freq(915.25);
 		Clear_Flags2();
 		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 	}
@@ -586,12 +579,12 @@ void Hop (void){
 	hop&=RFM95_FHSS_PRESENT_CHANNEL;
 	hop=hop%20;
 
-	//freq = (915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop));
+//	freq = (915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop));
 	freq=915.25;
 	RFM95_Set_Freq(freq);
 
 	char serial[80];
-	sprintf(serial, "freq = %f" , (double)hop);
+	sprintf(serial, "freq = %d" ,hop);
 	burstSerial(&serial[0], strlen(serial));
 }
 
