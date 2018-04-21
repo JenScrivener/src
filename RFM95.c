@@ -579,12 +579,16 @@ void Hop (void){
 	hop&=RFM95_FHSS_PRESENT_CHANNEL;
 	hop=hop%20;
 
-//	freq = (915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop));
-	freq=915.25;
-	RFM95_Set_Freq(freq);
+	if(hop>1){
+		freq = (915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop));
+	}
+	else{
+		freq=915.25;
+	}
 
+	RFM95_Set_Freq(freq);
 	char serial[80];
-	sprintf(serial, "freq = %d" ,hop);
+	sprintf(serial, "freq = %f %d" ,freq,hop);
 	burstSerial(&serial[0], strlen(serial));
 }
 
