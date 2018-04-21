@@ -86,22 +86,20 @@ void RFM95_Set_Freq(double Freq){									//Set freq reg (0x06,07&08) to Freq (f
 
 double RFM95_Get_Freq(void){										//Get freq from reg(0x06,07,08) in MHz
 
-	uint8_t *freq =(uint8_t*) malloc(3);
-	RFM95_Reg_Read(RFM95_REG_06_FRF_MSB, freq, 3);
+	uint8_t freq[3];
+	RFM95_Reg_Read(RFM95_REG_06_FRF_MSB, &freq[0], 3);
 
 	int temp=0;
 	double ret=0;
 
-	for(int x=0;x<3;x++){
-		temp|=*freq;
-
+	temp|=freq[0];
+	for(int x=1;x<3;x++){
 		temp=temp<<8;
-		freq++;
+		temp|=freq[x];
 	}
 
-	ret=temp*XOSC /(2^19);
-
-	free(freq);
+	ret=(double)temp/524288;
+	ret=ret*XOSC;
 	return(ret);
 }
 
@@ -303,7 +301,7 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 	RFM95_Reg_Write(RFM95_REG_1D_MODEM_CONFIG1, &mode, 1);
 
 	RFM95_DIO_MapReg1(RFM95_DIO0,3);
-	RFM95_Set_Hop_Period(2);
+	RFM95_Set_Hop_Period(30);
 
 }
 
@@ -334,7 +332,7 @@ void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressin
 void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_STDBY);			//Enter stand by mode
-
+	RFM95_Set_Freq(915.25);
 	uint8_t txbase = 0;												//Set FifoPtrAddr to FifoTxPtrBase
 	RFM95_Reg_Read(RFM95_REG_0E_FIFO_TX_BASE_ADDR,&txbase,1);
 	RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &txbase, 1);
@@ -452,7 +450,7 @@ void Clear_Flags2(void){
 }
 
 void ping(void){
-#define ping
+//	#define ping
 
 	uint8_t data=0;
 	char serial[80]="waiting for signal";
@@ -478,32 +476,97 @@ void ping(void){
 
 void EXTI2_IRQHandler(void) {
 	uint8_t IRQ_Flags;
-	uint8_t rssi=0;
-	int RSSI=0;
+//	uint8_t rssi=0;
+//	int RSSI=0;
 	char serial[80];
+
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
 	if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
-		RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE , &rssi, 1);
-		RSSI=rssi-157;
-		sprintf(serial, "RSSI = %d" , RSSI);
-		burstSerial(&serial[0], strlen(serial));
-		Clear_Flags2();
-		timer=1000;
+//		RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE , &rssi, 1);
+//		RSSI=rssi-157;
+//		sprintf(serial, "RSSI = %d" , RSSI);
+//		burstSerial(&serial[0], strlen(serial));
 
-		RFM95_LoRa_Test_Send(rssi);
+		timer=4000;
+
+		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
+		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
+		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
+
+		uint8_t len =0;
+		RFM95_Reg_Read(RFM95_REG_22_PAYLOAD_LENGTH,&len,1);
+
+		uint8_t *buf = (uint8_t*) malloc(len);
+		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
+
+		burstSerial((char*)buf,len);
+		free(buf);
+
+		sprintf(serial, "Hello World, Test, Testing 1,2,3,4,5,6, Hello");
+		RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+		Clear_Flags2();
 	}
 	if(IRQ_Flags&RFM95_TX_DONE){
 		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 		sprintf(serial, "tx");
 		burstSerial(&serial[0], strlen(serial));
+		RFM95_Set_Freq(915.25);
 		Clear_Flags2();
 	}
 
 }
 
 #endif /* ping */
+
+void ping2(void){
+	#define ping2
+	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
+	while(1);
+}
+
+#ifdef ping2
+
+void EXTI2_IRQHandler(void){
+	uint8_t IRQ_Flags;
+	double test;
+	char serial[80];
+
+	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+
+	if (IRQ_Flags&RFM95_RX_DONE && IRQ_Flags&RFM95_VALID_HEADER){
+		RFM95_Set_Freq(915.25);
+		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
+		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
+		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
+
+		uint8_t len =0;
+		RFM95_Reg_Read(RFM95_REG_22_PAYLOAD_LENGTH,&len,1);
+
+		uint8_t *buf = (uint8_t*) malloc(len);
+		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
+
+		burstSerial((char*)buf,len);
+		free(buf);
+
+		Clear_Flags2();
+	}
+
+	if(IRQ_Flags&RFM95_TX_DONE){
+		sprintf(serial, "%0.3f",RFM95_Get_Freq());
+		burstSerial(&serial[0], strlen(serial));
+		RFM95_Set_Freq(915.908);
+		test = RFM95_Get_Freq();
+		sprintf(serial, "%0.3f",RFM95_Get_Freq());
+		burstSerial(&serial[0], strlen(serial));
+		Clear_Flags2();
+		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
+	}
+}
+
+#endif /* ping2 */
+
 
 void EXTI1_IRQHandler(void) {
 	uint8_t IRQ_Flags;
@@ -517,12 +580,24 @@ void EXTI1_IRQHandler(void) {
 
 void Hop (void){
 	uint8_t hop;
-	char serial[80];
+	double freq;
 
 	RFM95_Reg_Read(RFM95_REG_1C_HOP_CHANNEL, &hop, 1);
 	hop&=RFM95_FHSS_PRESENT_CHANNEL;
+	hop=hop%20;
 
-	double freq = 915.25;
-	sprintf(serial, "%d" , freq); //(915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop-1))
+	//freq = (915+LIPD_BW/2)+((LIPD_BW+LIPD_Gap)*(hop));
+	freq=915.25;
+	RFM95_Set_Freq(freq);
+
+	char serial[80];
+	sprintf(serial, "freq = %f" , (double)hop);
 	burstSerial(&serial[0], strlen(serial));
+}
+
+void EXTI0_IRQHandler(void) {
+	char serial[80];
+	sprintf(serial, "Hello World, Test, Testing 1,2,3,4,5,6, Hello");
+	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+	EXTI_ClearFlag(EXTI_Line0);
 }

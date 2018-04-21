@@ -55,6 +55,7 @@ void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len);
 void RFM95_LoRa_Test_Send3(void);									//Resend last transmision (requires implicit header mode and FifoTxPtrBase=0x80)
 uint8_t RFM95_LoRa_Test_Recieve(void);								//Recieve one byte (flash LEDs with STM32F411 discover board)
 void RFM95_LoRa_Test_Recieve2(void);
+void EXTI0_IRQHandler(void);
 void EXTI1_IRQHandler(void);
 void EXTI2_IRQHandler(void);
 void Hop(void);
@@ -63,6 +64,7 @@ void Clear_Flags1(void);
 void Clear_Flags2(void);
 
 void ping(void);
+void ping2(void);
 
 //Register addresses from table 85 Semtech (HopeRF doesn't have an RX current 0x10)
 #define RFM95_REG_00_FIFO                                0x00

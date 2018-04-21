@@ -121,14 +121,14 @@ void initLoRaFlagEXTI2(void){
 	NVIC_Init(&NVIC_InitStruct);
 }
 
-void EXTI0_IRQHandler(void) {
-
-	GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
-	GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
-	for(int x=0;x<1000000;x++);
-	EXTI_ClearFlag(EXTI_Line0);
-
-}
+//void EXTI0_IRQHandler(void) {
+//
+//	GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
+//	GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
+//	for(int x=0;x<1000000;x++);
+//	EXTI_ClearFlag(EXTI_Line0);
+//
+//}
 
 /*EXTI2 is handled in RFM95 */
 
