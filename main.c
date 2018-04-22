@@ -52,6 +52,7 @@ void init(void){
 	initUserButtonEXTI0();
 	initLoRaFlagEXTI1();
 	initLoRaFlagEXTI2();
+//	initLoRaFlagEXTI3();
 	initUART2();
 	SysTick_Config(83990);	//2ms per trigger
 

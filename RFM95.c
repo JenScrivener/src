@@ -8,6 +8,7 @@
 #include "RFM95.h"
 
 int timer=1000;
+uint8_t ADDRESS = 0x01;
 
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len){		//Write len bytes of data to reg
 
@@ -301,6 +302,7 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 	RFM95_Reg_Write(RFM95_REG_1D_MODEM_CONFIG1, &mode, 1);
 
 	RFM95_DIO_MapReg1(RFM95_DIO0,3);
+//	RFM95_DIO_MapReg1(RFM95_DIO3,1);
 	RFM95_Set_Hop_Period(3);
 
 }
@@ -321,12 +323,6 @@ void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressin
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
 
-//	uint8_t txdone=0;
-//	while(!txdone){
-//		RFM95_Reg_Read(0x12, &txdone, 1);
-//	}
-//	Clear_Flags2();
-
 }
 
 void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
@@ -344,12 +340,12 @@ void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
 
-	uint8_t txdone=0;
-	while(!txdone){
-		RFM95_Reg_Read(0x12, &txdone, 1);
-	}
-
-	Clear_Flags2();
+//	uint8_t txdone=0;
+//	while(!txdone){
+//		RFM95_Reg_Read(0x12, &txdone, 1);
+//	}
+//
+//	Clear_Flags2();
 }
 
 void RFM95_LoRa_Test_Send3(void){									//Resend last transmision (requires implicit header mode and FifoTxPtrBase=0x80)
@@ -359,12 +355,6 @@ void RFM95_LoRa_Test_Send3(void){									//Resend last transmision (requires im
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
 
-	uint8_t txdone=0;
-	while(!txdone){
-		RFM95_Reg_Read(0x12, &txdone, 1);
-	}
-
-	Clear_Flags2();
 }
 
 uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
@@ -528,6 +518,34 @@ void ping2(void){
 
 #ifdef ping2
 
+void EXTI3_IRQHandler(void){
+	uint8_t IRQ_Flags;
+	uint8_t address;
+	uint8_t oldAddress;
+	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+	if (IRQ_Flags&RFM95_VALID_HEADER){
+		RFM95_Reg_Read(RFM95_REG_0F_FIFO_RX_BASE_ADDR, &oldAddress, 1);
+		address=oldAddress;
+		while(address-oldAddress<2){
+			RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR, &address, 1);
+		}
+		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
+		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
+		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
+		RFM95_Reg_Read(RFM95_REG_00_FIFO, &address, 1);
+		if(address==(ADDRESS)){
+			//packet for us
+		}
+		else{
+			char serial[80];
+			sprintf(serial, "not for me :-[");
+			burstSerial(&serial[0], strlen(serial));
+			Clear_Flags2();
+		}
+	}
+	EXTI_ClearFlag(EXTI_Line3);
+}
+
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
 
@@ -545,8 +563,14 @@ void EXTI2_IRQHandler(void){
 		uint8_t *buf = (uint8_t*) malloc(len);
 		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
 
-		burstSerial((char*)buf,len);
-		free(buf);
+		if(*buf==ADDRESS){
+			burstSerial((char*)buf,len);
+		}
+		else{
+			char serial[80];
+			sprintf(serial, "not for me :-[");
+			burstSerial(&serial[0], strlen(serial));
+		}
 
 		Clear_Flags2();
 	}
@@ -556,6 +580,10 @@ void EXTI2_IRQHandler(void){
 		Clear_Flags2();
 		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 	}
+
+//	else{
+//		Clear_Flags2();
+//	}
 }
 
 #endif /* ping2 */

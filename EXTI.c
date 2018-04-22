@@ -121,6 +121,44 @@ void initLoRaFlagEXTI2(void){
 	NVIC_Init(&NVIC_InitStruct);
 }
 
+void initLoRaFlagEXTI3(void){
+
+	EXTI_InitTypeDef EXTI_InitStruct;
+	NVIC_InitTypeDef NVIC_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_3;
+	GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOB, EXTI_PinSource3);
+
+	EXTI_InitStruct.EXTI_Line = EXTI_Line3;
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
+
+	EXTI_Init(&EXTI_InitStruct);
+
+	/* Add IRQ vector to NVIC */
+	/* PB2 is connected to EXTI_Line2, which has EXTI2_IRQn vector */
+	NVIC_InitStruct.NVIC_IRQChannel = EXTI3_IRQn;
+	/* Set priority */
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+	/* Set sub priority */
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+	/* Enable interrupt */
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	/* Add to NVIC */
+	NVIC_Init(&NVIC_InitStruct);
+}
+
 //void EXTI0_IRQHandler(void) {
 //
 //	GPIO_ToggleBits(GPIOD,GPIO_Pin_12);

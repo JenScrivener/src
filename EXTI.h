@@ -13,6 +13,7 @@
 void initUserButtonEXTI0(void);
 void initLoRaFlagEXTI1(void);
 void initLoRaFlagEXTI2(void);
+void initLoRaFlagEXTI3(void);
 
 void EXTI0_IRQHandler(void);
 //void EXTI1_IRQHandler(void); 	//handled in RFM95
