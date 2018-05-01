@@ -443,7 +443,7 @@ void ping(void){
 //	#define ping
 
 	uint8_t data=0;
-	char serial[80]="waiting for signal";
+	char serial[40]="waiting for signal";
 	while(1){
 
 		if(timer<0){
@@ -518,38 +518,11 @@ void ping2(void){
 
 #ifdef ping2
 
-//void EXTI3_IRQHandler(void){
-//	uint8_t IRQ_Flags;
-//	uint8_t address;
-//	uint8_t oldAddress;
-//	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
-//	if (IRQ_Flags&RFM95_VALID_HEADER){
-//		RFM95_Reg_Read(RFM95_REG_0F_FIFO_RX_BASE_ADDR, &oldAddress, 1);
-//		address=oldAddress;
-//		while(address-oldAddress<2){
-//			RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR, &address, 1);
-//		}
-//		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
-//		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
-//		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
-//		RFM95_Reg_Read(RFM95_REG_00_FIFO, &address, 1);
-//		if(address==(ADDRESS)){
-//			//packet for us
-//		}
-//		else{
-//			char serial[80];
-//			sprintf(serial, "not for me :-[");
-//			burstSerial(&serial[0], strlen(serial));
-//			Clear_Flags2();
-//		}
-//	}
-//	EXTI_ClearFlag(EXTI_Line3);
-//}
-
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
 	uint8_t rssi_temp;
 	int RSSI;
+	char data[40]={0};
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
@@ -562,20 +535,36 @@ void EXTI2_IRQHandler(void){
 		uint8_t len =0;
 		RFM95_Reg_Read(RFM95_REG_22_PAYLOAD_LENGTH,&len,1);
 
-		uint8_t *buf = (uint8_t*) malloc(len);
-		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
+		uint8_t *buf2 = (uint8_t*) malloc(len);
+		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf2, len);
 
-//		if(*buf==ADDRESS){
-		if(1){
+		if(*buf2==ADDRESS){
+//		if(1){
+			buf2+=4;
 			RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE, &rssi_temp, 1);
 			RSSI=rssi_temp-157;
-			burstSerial((char*)buf,len);
-			char serial[80];
-			sprintf(serial, "RSSI = %d",RSSI);
+			burstSerial((char*)buf2,len-4);
+			char serial[40]={0};
+//			sprintf(serial, "My RSSI was %d",RSSI);
+			sprintf(serial, "Jen loves Yu so so so much!!");
 			burstSerial(&serial[0], strlen(serial));
+
+			sprintf(data, "The other node's RSSI was %d",RSSI);
+
+			for(int x=0;x<4;x++){
+				serial[x]=1;
+			}
+			serial[0]=(char)ADDRESS;
+			for(int x=4;x<40;x++){
+				serial[x]=data[x-4];
+			}
+
+			RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+
+//			free(buf2);
 		}
 		else{
-			char serial[80];
+			char serial[40];
 			sprintf(serial, "not for me :-[");
 			burstSerial(&serial[0], strlen(serial));
 		}
@@ -629,8 +618,18 @@ void Hop (void){
 }
 
 void EXTI0_IRQHandler(void) {
-	char serial[80];
-	sprintf(serial, "Hello World, Test, Testing 1,2,3,4,5,6, Hello");
+	char serial[40];
+	char data[40];
+	sprintf(data, "Hello World, Test, Testing 1");
+
+	for(int x=0;x<4;x++){
+		serial[x]=1;
+	}
+	serial[0]=(char)ADDRESS;
+	for(int x=4;x<40;x++){
+		serial[x]=data[x-4];
+	}
+
 	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
 	EXTI_ClearFlag(EXTI_Line0);
 }
