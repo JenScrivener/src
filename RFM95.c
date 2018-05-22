@@ -545,8 +545,7 @@ void EXTI2_IRQHandler(void){
 			RSSI=rssi_temp-157;
 			burstSerial((char*)buf2,len-4);
 			char serial[40]={0};
-//			sprintf(serial, "My RSSI was %d",RSSI);
-			sprintf(serial, "Jen loves Yu so so so much!!");
+			sprintf(serial, "My RSSI was %d",RSSI);
 			burstSerial(&serial[0], strlen(serial));
 
 			sprintf(data, "The other node's RSSI was %d",RSSI);
