@@ -7,9 +7,6 @@
 
 #include "RFM95.h"
 
-int timer=1000;
-uint8_t ADDRESS = 0x01;
-
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len){		//Write len bytes of data to reg
 
 	Reg |= RFM95_WRITE;												//Set first bit to write
@@ -270,18 +267,7 @@ uint8_t RFM95_Get_DIO_MapReg2(uint8_t DIO){
 	return (map);
 }
 
-void RFM95_LoRa_Init(double Freq){									//Use default settings for all registers except for frequency registors.
-
-	uint8_t mode = RFM95_LONG_RANGE_MODE;
-	mode|=RFM95_MODE_SLEEP;
-
-	RFM95_Set_Mode(mode);
-	RFM95_Set_Mode(mode);
-	RFM95_Set_Freq(Freq);
-
-}
-
-void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower){
+void RFM95_LoRa_Init(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower){
 
 	uint8_t mode = RFM95_LONG_RANGE_MODE;
 	mode|=RFM95_MODE_SLEEP;
@@ -302,30 +288,29 @@ void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, ui
 	RFM95_Reg_Write(RFM95_REG_1D_MODEM_CONFIG1, &mode, 1);
 
 	RFM95_DIO_MapReg1(RFM95_DIO0,3);
-//	RFM95_DIO_MapReg1(RFM95_DIO3,1);
 	RFM95_Set_Hop_Period(3);
-
 }
 
-void SysTick_Handler(void){
-	timer--;
+void CheckCRC(uint8_t *Data){
+	unit8_t crc=0;
+	unit8_t data=0;
+
+	data=*Data;
+	for(int count=0;count<=PACKET_SIZE;count++){
+		data=data<<8;
+		Data++;
+		data&=*Data;
+	}
+
+	for(int count=0;count<PACKET_SIZE*8;count++){
+		if(crc&1){
+			crc++;
+		}
+		crc>>1;
+	}
 }
 
-void RFM95_LoRa_Test_Send(uint8_t Data){							//Send one byte without addressing
-
-	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_STDBY);			//Enter stand by mode
-
-	uint8_t txbase = 0;												//Set FifoPtrAddr to FifoTxPtrBase
-	RFM95_Reg_Read(RFM95_REG_0E_FIFO_TX_BASE_ADDR,&txbase,1);
-	RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &txbase, 1);
-
-	RFM95_Reg_Write(RFM95_REG_00_FIFO , &Data, 1);					//Write data to FIFO
-
-	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
-
-}
-
-void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
+void L1Send(uint8_t *Data){											//Send 8 bytes of data with the 5 byte L2 header
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_STDBY);			//Enter stand by mode
 	RFM95_Set_Freq(915.25);
@@ -333,27 +318,34 @@ void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len){
 	RFM95_Reg_Read(RFM95_REG_0E_FIFO_TX_BASE_ADDR,&txbase,1);
 	RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &txbase, 1);
 
-	RFM95_Reg_Write(RFM95_REG_22_PAYLOAD_LENGTH, &Len, 1);			//Set the payload length
+	RFM95_Reg_Write(RFM95_REG_22_PAYLOAD_LENGTH, 13, 1);			//Set the payload length
 
-
-	RFM95_Reg_Write(RFM95_REG_00_FIFO , Data, Len);					//Write data to FIFO
+	RFM95_Reg_Write(RFM95_REG_00_FIFO , Data, 13);					//Write data to FIFO
 
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
-
-//	uint8_t txdone=0;
-//	while(!txdone){
-//		RFM95_Reg_Read(0x12, &txdone, 1);
-//	}
-//
-//	Clear_Flags2();
 }
 
-void RFM95_LoRa_Test_Send3(void){									//Resend last transmision (requires implicit header mode and FifoTxPtrBase=0x80)
+void L2Send(uint8_t ID, uint8_t NextAddress, uint8_t TTL, uint8_t *Data){
+	uint8_t crc = CheckCRC(Data);
+	uint8_t header;
 
-	uint8_t txbase=0x80;
-	RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &txbase, 1);
+	uint8_t packet_info = crc<<3;
+	packet_info &= ID;
+	packet_info = packet_info<<2;
+	packet_info = TTL;
 
-	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_TX);			//Enter Transmit mode
+	header = NextAdress<<16;
+	header &= CURRENT_ADDRESS;
+	header = header<<16;
+	header &= packet_info;
+
+	for(int count=0;count<=PACKET_SIZE;count++){
+		header = header<<8;
+		header &= *Data;
+		Data++;
+	}
+
+	L1Send(&header);
 
 }
 
