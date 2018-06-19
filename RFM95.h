@@ -17,6 +17,8 @@
 #include <string.h>
 #include <math.h>
 
+uint8_t CURRENT_ADDRESS = 1;
+
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len);		//Write len bytes of data to reg
 void RFM95_Reg_Read(uint8_t Reg, uint8_t* Data, uint8_t Len);		//Read len bytes of data from reg
 
@@ -50,9 +52,8 @@ uint8_t RFM95_Get_DIO_Map(uint8_t DIO);
 void RFM95_LoRa_Init(double Freq);									//Use default settings for all registers except for frequency registors.
 void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower);
 
-void RFM95_LoRa_Test_Send(uint8_t Data);							//Send one byte without addressing (flash LEDs with STM32F411 discover board)
-void RFM95_LoRa_Test_Send2(uint8_t *Data, uint8_t Len);
-void RFM95_LoRa_Test_Send3(void);									//Resend last transmision (requires implicit header mode and FifoTxPtrBase=0x80)
+void L1Send(uint8_t *Data);
+void L2Send(uint8_t ID, uint8_t NextAddress, uint8_t TTL, uint8_t *Data);
 uint8_t RFM95_LoRa_Test_Recieve(void);								//Recieve one byte (flash LEDs with STM32F411 discover board)
 void RFM95_LoRa_Test_Recieve2(void);
 void EXTI0_IRQHandler(void);

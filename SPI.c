@@ -120,6 +120,46 @@ uint8_t SPI_Send(uint8_t Data){
 	return(SPI2->DR);							// return data
 }
 
+void initUART1(void){
+	GPIO_InitTypeDef GPIO_InitStruct;
+	USART_InitTypeDef USART_InitStruct;
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6;
+	GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_7;
+	GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
+
+	USART_InitStruct.USART_BaudRate=9600;
+	USART_InitStruct.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
+	USART_InitStruct.USART_Mode=USART_Mode_Tx;
+	USART_InitStruct.USART_Parity=USART_Parity_No;
+	USART_InitStruct.USART_StopBits=USART_StopBits_1;
+	USART_InitStruct.USART_WordLength=USART_WordLength_8b;
+	USART_Init(USART1, &USART_InitStruct);
+
+    /* Enable global interrupts for USART */
+	NVIC_InitTypeDef NVIC_InitStruct;
+    NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 1;
+    NVIC_Init(&NVIC_InitStruct);
+
+	USART_Cmd(USART1, ENABLE);
+}
+
 void initUART2(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	USART_InitTypeDef USART_InitStruct;
@@ -143,7 +183,7 @@ void initUART2(void){
 
 	USART_InitStruct.USART_BaudRate=9600;
 	USART_InitStruct.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
-	USART_InitStruct.USART_Mode=USART_Mode_Tx;
+	USART_InitStruct.USART_Mode=USART_Mode_Rx;
 	USART_InitStruct.USART_Parity=USART_Parity_No;
 	USART_InitStruct.USART_StopBits=USART_StopBits_1;
 	USART_InitStruct.USART_WordLength=USART_WordLength_8b;
@@ -152,17 +192,41 @@ void initUART2(void){
 	USART_Cmd(USART2, ENABLE);
 }
 
-void serial(uint8_t Data){
+void serial1(uint8_t Data){
+
+	USART1->DR=Data;
+	while( !(USART1->SR & USART_FLAG_TXE) ); 	// wait until transmit complete
+}
+
+void serial2(uint8_t Data){
 
 	USART2->DR=Data;
 	while( !(USART2->SR & USART_FLAG_TXE) ); 	// wait until transmit complete
 }
 
-void burstSerial(char *Data, uint8_t Len){
+void burstSerial1(char *Data, uint8_t Len){
 	for(int x=0;x<Len;x++){
 
-		serial(*Data);
+		serial1(*Data);
 		Data++;
 	}
-	serial(13);
+	serial1(13);
+}
+
+void burstSerial2(char *Data, uint8_t Len){
+	for(int x=0;x<Len;x++){
+
+		serial2(*Data);
+		Data++;
+	}
+	serial2(13);
+}
+
+void USART2_IRQHandler(void){
+    if (USART2->SR & USART_FLAG_IDLE) {         /* We want IDLE flag only */
+		volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
+		tmp = USART2->SR;                       /* Read status register */
+		tmp = USART2->DR;                       /* Read data register */
+		(void)tmp;
+    }
 }

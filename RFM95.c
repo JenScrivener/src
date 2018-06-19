@@ -6,6 +6,7 @@
  */
 
 #include "RFM95.h"
+uint8_t PACKET_SIZE = 13;
 
 void RFM95_Reg_Write(uint8_t Reg, uint8_t* Data, uint8_t Len){		//Write len bytes of data to reg
 
@@ -267,7 +268,7 @@ uint8_t RFM95_Get_DIO_MapReg2(uint8_t DIO){
 	return (map);
 }
 
-void RFM95_LoRa_Init(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower){
+void RFM95_LoRa_Init2(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uint8_t SpreadingFactor, uint8_t Bandwidth, uint8_t OutputPower){
 
 	uint8_t mode = RFM95_LONG_RANGE_MODE;
 	mode|=RFM95_MODE_SLEEP;
@@ -289,11 +290,14 @@ void RFM95_LoRa_Init(double Freq, uint8_t PayloadLength, uint8_t CodingRate, uin
 
 	RFM95_DIO_MapReg1(RFM95_DIO0,3);
 	RFM95_Set_Hop_Period(3);
+
+//	$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D
+
 }
 
-void CheckCRC(uint8_t *Data){
-	unit8_t crc=0;
-	unit8_t data=0;
+uint8_t CheckCRC(uint8_t *Data){
+	uint8_t crc=0;
+	uint8_t data=0;
 
 	data=*Data;
 	for(int count=0;count<=PACKET_SIZE;count++){
@@ -306,8 +310,9 @@ void CheckCRC(uint8_t *Data){
 		if(crc&1){
 			crc++;
 		}
-		crc>>1;
 	}
+
+	return(crc);
 }
 
 void L1Send(uint8_t *Data){											//Send 8 bytes of data with the 5 byte L2 header
@@ -318,7 +323,8 @@ void L1Send(uint8_t *Data){											//Send 8 bytes of data with the 5 byte L2 
 	RFM95_Reg_Read(RFM95_REG_0E_FIFO_TX_BASE_ADDR,&txbase,1);
 	RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &txbase, 1);
 
-	RFM95_Reg_Write(RFM95_REG_22_PAYLOAD_LENGTH, 13, 1);			//Set the payload length
+	txbase = 13;
+	RFM95_Reg_Write(RFM95_REG_22_PAYLOAD_LENGTH,&txbase, 1);			//Set the payload length
 
 	RFM95_Reg_Write(RFM95_REG_00_FIFO , Data, 13);					//Write data to FIFO
 
@@ -334,7 +340,7 @@ void L2Send(uint8_t ID, uint8_t NextAddress, uint8_t TTL, uint8_t *Data){
 	packet_info = packet_info<<2;
 	packet_info = TTL;
 
-	header = NextAdress<<16;
+	header = NextAddress<<16;
 	header &= CURRENT_ADDRESS;
 	header = header<<16;
 	header &= packet_info;
@@ -395,7 +401,7 @@ uint8_t RFM95_LoRa_Test_Recieve(void){								//Recieve one byte
 //		uint8_t *buf = (uint8_t*) malloc(len);
 //		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
 //
-//		burstSerial(buf,len);
+//		burstSerial2(buf,len);
 //		free(buf);
 //
 //		Clear_Flags2();
@@ -436,14 +442,15 @@ void ping(void){
 
 	uint8_t data=0;
 	char serial[40]="waiting for signal";
+	int timer = 4000;
 	while(1){
 
 		if(timer<0){
 			GPIO_SetBits(GPIOD,GPIO_Pin_12);
-			RFM95_LoRa_Test_Send(data);
+			L1Send(&data);
 			GPIO_ResetBits(GPIOD,GPIO_Pin_12);
 			sprintf(serial, "waiting for signal.");
-			burstSerial(&serial[0], strlen(serial));
+			burstSerial2(&serial[0], strlen(serial));
 			timer=5000;
 
 			RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
@@ -469,7 +476,7 @@ void EXTI2_IRQHandler(void) {
 //		RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE , &rssi, 1);
 //		RSSI=rssi-157;
 //		sprintf(serial, "RSSI = %d" , RSSI);
-//		burstSerial(&serial[0], strlen(serial));
+//		burstSerial2(&serial[0], strlen(serial));
 
 		timer=4000;
 
@@ -483,7 +490,7 @@ void EXTI2_IRQHandler(void) {
 		uint8_t *buf = (uint8_t*) malloc(len);
 		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
 
-		burstSerial((char*)buf,len);
+		burstSerial2((char*)buf,len);
 		free(buf);
 
 		sprintf(serial, "Hello World, Test, Testing 1,2,3,4,5,6, Hello");
@@ -493,7 +500,7 @@ void EXTI2_IRQHandler(void) {
 	if(IRQ_Flags&RFM95_TX_DONE){
 		RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
 		sprintf(serial, "tx");
-		burstSerial(&serial[0], strlen(serial));
+		burstSerial2(&serial[0], strlen(serial));
 		RFM95_Set_Freq(915.25);
 		Clear_Flags2();
 	}
@@ -530,34 +537,34 @@ void EXTI2_IRQHandler(void){
 		uint8_t *buf2 = (uint8_t*) malloc(len);
 		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf2, len);
 
-		if(*buf2==ADDRESS){
+		if(*buf2==CURRENT_ADDRESS){
 //		if(1){
 			buf2+=4;
 			RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE, &rssi_temp, 1);
 			RSSI=rssi_temp-157;
-			burstSerial((char*)buf2,len-4);
+			burstSerial2((char*)buf2,len-4);
 			char serial[40]={0};
 			sprintf(serial, "My RSSI was %d",RSSI);
-			burstSerial(&serial[0], strlen(serial));
+			burstSerial2(&serial[0], strlen(serial));
 
 			sprintf(data, "The other node's RSSI was %d",RSSI);
 
 			for(int x=0;x<4;x++){
 				serial[x]=1;
 			}
-			serial[0]=(char)ADDRESS;
+			serial[0]=(char)CURRENT_ADDRESS;
 			for(int x=4;x<40;x++){
 				serial[x]=data[x-4];
 			}
 
-			RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+			L1Send((uint8_t*)&serial);
 
 //			free(buf2);
 		}
 		else{
 			char serial[40];
 			sprintf(serial, "not for me :-[");
-			burstSerial(&serial[0], strlen(serial));
+			burstSerial2(&serial[0], strlen(serial));
 		}
 
 		Clear_Flags2();
@@ -605,7 +612,7 @@ void Hop (void){
 	RFM95_Set_Freq(freq);
 //	char serial[80];
 //	sprintf(serial, "freq = %f %d" ,freq,hop);
-//	burstSerial(&serial[0], strlen(serial));
+//	burstSerial2(&serial[0], strlen(serial));
 }
 
 void EXTI0_IRQHandler(void) {
@@ -616,11 +623,11 @@ void EXTI0_IRQHandler(void) {
 	for(int x=0;x<4;x++){
 		serial[x]=1;
 	}
-	serial[0]=(char)ADDRESS;
+	serial[0]=(char)CURRENT_ADDRESS;
 	for(int x=4;x<40;x++){
 		serial[x]=data[x-4];
 	}
 
-	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+	L1Send((uint8_t*)&serial);
 	EXTI_ClearFlag(EXTI_Line0);
 }

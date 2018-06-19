@@ -191,7 +191,7 @@ void initLoRaFlagEXTI3(void){
 //		uint8_t *buf = (uint8_t*) malloc(len);
 //		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf, len);
 //
-//		burstSerial(buf,len);
+//		burstSerial2(buf,len);
 //		free(buf);
 //
 //		Clear_Flags();

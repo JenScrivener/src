@@ -6,11 +6,6 @@
 #include <string.h>
 
 void init(void);
-void flash (void);
-
-//Test
-
-int count=0;
 
 int main(void){
 
@@ -53,32 +48,8 @@ void init(void){
 	initLoRaFlagEXTI1();
 	initLoRaFlagEXTI2();
 //	initLoRaFlagEXTI3();
+	initUART1();
 	initUART2();
 	SysTick_Config(83990);	//2ms per trigger
 
-}
-
-void flash (void){
-	switch(count) {
-		case 0:
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
-			count++;
-			break;
-		case 1:
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
-			count++;
-			break;
-		case 2:
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_14);
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-			count++;
-			break;
-		case 3:
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_15);
-			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
-			count=0;
-			break;
-	}
 }
