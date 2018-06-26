@@ -518,13 +518,12 @@ void ping2(void){
 
 #ifdef ping2
 
-<<<<<<< HEAD
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
 	uint8_t rssi_temp;
 	int RSSI;
 	char data[40]={0};
-=======
+
 void EXTI3_IRQHandler(void){
 	uint8_t IRQ_Flags;
 	uint8_t address;
@@ -555,7 +554,6 @@ void EXTI3_IRQHandler(void){
 
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
->>>>>>> parent of 42e32b0... Code used to test range on 29/04/2018
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
@@ -571,7 +569,6 @@ void EXTI2_IRQHandler(void){
 		uint8_t *buf2 = (uint8_t*) malloc(len);
 		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf2, len);
 
-<<<<<<< HEAD
 		if(*buf2==ADDRESS){
 //		if(1){
 			buf2+=4;
@@ -595,10 +592,9 @@ void EXTI2_IRQHandler(void){
 			RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
 
 //			free(buf2);
-=======
+
 		if(*buf==ADDRESS){
 			burstSerial((char*)buf,len);
->>>>>>> parent of 42e32b0... Code used to test range on 29/04/2018
 		}
 		else{
 			char serial[40];
