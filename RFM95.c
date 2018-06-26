@@ -518,11 +518,44 @@ void ping2(void){
 
 #ifdef ping2
 
+<<<<<<< HEAD
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
 	uint8_t rssi_temp;
 	int RSSI;
 	char data[40]={0};
+=======
+void EXTI3_IRQHandler(void){
+	uint8_t IRQ_Flags;
+	uint8_t address;
+	uint8_t oldAddress;
+	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
+	if (IRQ_Flags&RFM95_VALID_HEADER){
+		RFM95_Reg_Read(RFM95_REG_0F_FIFO_RX_BASE_ADDR, &oldAddress, 1);
+		address=oldAddress;
+		while(address-oldAddress<2){
+			RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR, &address, 1);
+		}
+		uint8_t rxbase = 0;												//Set FifoPtrAddr to FifoRxCurrentAddr
+		RFM95_Reg_Read(RFM95_REG_10_FIFO_RX_CURRENT_ADDR,&rxbase,1);
+		RFM95_Reg_Write(RFM95_REG_0D_FIFO_ADDR_PTR , &rxbase, 1);
+		RFM95_Reg_Read(RFM95_REG_00_FIFO, &address, 1);
+		if(address==(ADDRESS)){
+			//packet for us
+		}
+		else{
+			char serial[80];
+			sprintf(serial, "not for me :-[");
+			burstSerial(&serial[0], strlen(serial));
+			Clear_Flags2();
+		}
+	}
+	EXTI_ClearFlag(EXTI_Line3);
+}
+
+void EXTI2_IRQHandler(void){
+	uint8_t IRQ_Flags;
+>>>>>>> parent of 42e32b0... Code used to test range on 29/04/2018
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
@@ -538,6 +571,7 @@ void EXTI2_IRQHandler(void){
 		uint8_t *buf2 = (uint8_t*) malloc(len);
 		RFM95_Reg_Read(RFM95_REG_00_FIFO, buf2, len);
 
+<<<<<<< HEAD
 		if(*buf2==ADDRESS){
 //		if(1){
 			buf2+=4;
@@ -561,6 +595,10 @@ void EXTI2_IRQHandler(void){
 			RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
 
 //			free(buf2);
+=======
+		if(*buf==ADDRESS){
+			burstSerial((char*)buf,len);
+>>>>>>> parent of 42e32b0... Code used to test range on 29/04/2018
 		}
 		else{
 			char serial[40];
@@ -611,9 +649,9 @@ void Hop (void){
 	}
 
 	RFM95_Set_Freq(freq);
-//	char serial[80];
-//	sprintf(serial, "freq = %f %d" ,freq,hop);
-//	burstSerial(&serial[0], strlen(serial));
+	char serial[80];
+	sprintf(serial, "freq = %f %d" ,freq,hop);
+	burstSerial(&serial[0], strlen(serial));
 }
 
 void EXTI0_IRQHandler(void) {
