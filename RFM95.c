@@ -550,6 +550,7 @@ void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
 	uint8_t rssi_temp;
 	int RSSI;
+<<<<<<< HEAD
 
 void EXTI3_IRQHandler(void){
 	uint8_t IRQ_Flags;
@@ -581,6 +582,8 @@ void EXTI3_IRQHandler(void){
 
 void EXTI2_IRQHandler(void){
 	uint8_t IRQ_Flags;
+=======
+>>>>>>> parent of 22482e7... Auto ping with 1 byte address and 3byte reserved. used for solo long distance tests
 
 	RFM95_Reg_Read(RFM95_REG_12_IRQ_FLAGS, &IRQ_Flags, 1);
 
@@ -600,6 +603,7 @@ void EXTI2_IRQHandler(void){
 		if(1){
 			RFM95_Reg_Read(RFM95_REG_1A_PKT_RSSI_VALUE, &rssi_temp, 1);
 			RSSI=rssi_temp-157;
+<<<<<<< HEAD
 <<<<<<< HEAD
 			burstSerial((char*)buf2,len-4);
 			char serial[40]={0};
@@ -622,6 +626,12 @@ void EXTI2_IRQHandler(void){
 
 		if(*buf==ADDRESS){
 			burstSerial((char*)buf,len);
+=======
+			burstSerial((char*)buf,len);
+			char serial[80];
+			sprintf(serial, "RSSI = %d",RSSI);
+			burstSerial(&serial[0], strlen(serial));
+>>>>>>> parent of 22482e7... Auto ping with 1 byte address and 3byte reserved. used for solo long distance tests
 =======
 			burstSerial((char*)buf,len);
 			char serial[80];
