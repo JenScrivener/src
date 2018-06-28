@@ -62,6 +62,7 @@ void Hop(void);
 void SysTick_Handler(void);
 void Clear_Flags1(void);
 void Clear_Flags2(void);
+void USART1_IRQHandler(void);
 
 void ping(void);
 void ping2(void);

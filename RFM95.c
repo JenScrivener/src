@@ -513,7 +513,14 @@ void EXTI2_IRQHandler(void) {
 void ping2(void){
 	#define ping2
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
-	while(1);
+	while(1){
+//		if(USART1->SR & USART_SR_RXNE){
+//			char t = USART_ReceiveData(USART1);
+//			serial(t);
+//			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
+//			GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
+//		}
+	}
 }
 
 #ifdef ping2
@@ -633,4 +640,13 @@ void EXTI0_IRQHandler(void) {
 
 	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
 	EXTI_ClearFlag(EXTI_Line0);
+}
+
+void USART1_IRQHandler(void){
+	if(USART_GetITStatus(USART1,USART_IT_RXNE)){
+		char t = USART_ReceiveData(USART1);
+		serial(t);
+		GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
+		GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
+	}
 }

@@ -120,6 +120,58 @@ uint8_t SPI_Send(uint8_t Data){
 	return(SPI2->DR);							// return data
 }
 
+void initUART1(void){
+	GPIO_InitTypeDef GPIO_InitStruct;
+	USART_InitTypeDef USART_InitStruct;
+	NVIC_InitTypeDef NVIC_InitStruct;
+	DMA_InitTypeDef DMA_InitStruct;
+
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_6;
+	GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	GPIO_InitStruct.GPIO_Pin = GPIO_Pin_7;
+	GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_USART1);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource7, GPIO_AF_USART1);
+
+	USART_InitStruct.USART_BaudRate=9600;
+	USART_InitStruct.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
+	USART_InitStruct.USART_Mode=USART_Mode_Rx;
+	USART_InitStruct.USART_Parity=USART_Parity_No;
+	USART_InitStruct.USART_StopBits=USART_StopBits_1;
+	USART_InitStruct.USART_WordLength=USART_WordLength_8b;
+	USART_Init(USART1, &USART_InitStruct);
+
+	USART_Cmd(USART1, ENABLE);
+
+    /* Add IRQ vector to NVIC */
+    NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
+    /* Set priority */
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x00;
+    /* Set sub priority */
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x00;
+    /* Enable interrupt */
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    /* Add to NVIC */
+    NVIC_Init(&NVIC_InitStruct);
+
+	USART1->CR1|= USART_CR1_RXNEIE;
+
+//	DMA_InitStruct.DMA_Channel=DMA_Channel_4;
+//	DMA_InitStruct.DMA_Memory0BaseAddr=(uint32_t)buffer;
+//	DMA_InitStruct.DMA_PeripheralBaseAddr
+}
+
 void initUART2(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	USART_InitTypeDef USART_InitStruct;
