@@ -8,15 +8,14 @@
 /*
  * SPI handles all the initialising for the SPI comms including chip select and IRQ, and enables an 8bit SPI send function
  */
+#include "stm32f4xx.h"
 
 #ifndef SPI_H_
 #define SPI_H_
 
-#include "stm32f4xx.h"
-#include <string.h>
-
 void initSPI1(void);
 void initSPI2(void);
+void initUART1(void);
 void initUART2(void);
 uint8_t SPI_Send(uint8_t Data);
 void serial(uint8_t Data);
