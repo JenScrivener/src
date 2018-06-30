@@ -17,7 +17,6 @@
 
 void initSPI1(void);
 void initSPI2(void);
-void initUART1(void);
 void initUART2(void);
 uint8_t SPI_Send(uint8_t Data);
 void serial(uint8_t Data);

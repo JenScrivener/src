@@ -120,6 +120,7 @@ uint8_t SPI_Send(uint8_t Data){
 	return(SPI2->DR);							// return data
 }
 
+<<<<<<< HEAD
 void initUART1(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	USART_InitTypeDef USART_InitStruct;
@@ -208,6 +209,8 @@ void initUART1(void){
     DMA_Cmd(DMA2_Stream5, ENABLE);
 }
 
+=======
+>>>>>>> parent of d34f900... Working on GPS aquisition
 void initUART2(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	USART_InitTypeDef USART_InitStruct;

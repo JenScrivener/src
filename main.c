@@ -57,7 +57,6 @@ void init(void){
 	initUART1();
 
 	SysTick_Config(83990);	//2ms per trigger
-	USART_ClearITPendingBit(USART1,USART_IT_RXNE);
 
 }
 

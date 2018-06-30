@@ -513,14 +513,7 @@ void EXTI2_IRQHandler(void) {
 void ping2(void){
 	#define ping2
 	RFM95_Set_Mode(RFM95_LONG_RANGE_MODE|RFM95_MODE_RXCONTINUOUS);
-	while(1){
-//		if(USART1->SR & USART_SR_RXNE){
-//			char t = USART_ReceiveData(USART1);
-//			serial(t);
-//			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
-//			GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
-//		}
-	}
+	while(1);
 }
 
 #ifdef ping2
@@ -643,6 +636,7 @@ void EXTI0_IRQHandler(void) {
 	burstSerial(&frequency[0],strlen(frequency));
 	EXTI_ClearFlag(EXTI_Line0);
 }
+<<<<<<< HEAD
 
 //void USART1_IRQHandler(void){
 //	if(USART_GetITStatus(USART1,USART_IT_RXNE)){
@@ -677,3 +671,5 @@ void USART1_IRQHandler(void) {
 void DMA2_Stream5_IRQHandler(void) {
 
 }
+=======
+>>>>>>> parent of d34f900... Working on GPS aquisition
