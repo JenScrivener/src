@@ -626,27 +626,54 @@ void Hop (void){
 }
 
 void EXTI0_IRQHandler(void) {
-	char serial[40];
-	char data[40];
-	sprintf(data, "Hello World, Test, Testing 1");
-
-	for(int x=0;x<4;x++){
-		serial[x]=1;
-	}
-	serial[0]=(char)ADDRESS;
-	for(int x=4;x<40;x++){
-		serial[x]=data[x-4];
-	}
-
-	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+//	char serial[40];
+//	char data[40];
+//	sprintf(data, "Hello World, Test, Testing 1");
+//
+//	for(int x=0;x<4;x++){
+//		serial[x]=1;
+//	}
+//	serial[0]=(char)ADDRESS;
+//	for(int x=4;x<40;x++){
+//		serial[x]=data[x-4];
+//	}
+//
+//	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+	char frequency [60] = "$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D";
+	burstSerial(&frequency[0],strlen(frequency));
 	EXTI_ClearFlag(EXTI_Line0);
 }
 
-void USART1_IRQHandler(void){
-	if(USART_GetITStatus(USART1,USART_IT_RXNE)){
-		char t = USART_ReceiveData(USART1);
-		serial(t);
-		GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
-		GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
-	}
+//void USART1_IRQHandler(void){
+//	if(USART_GetITStatus(USART1,USART_IT_RXNE)){
+//		char t = USART_ReceiveData(USART1);
+//		serial(t);
+//		GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
+//		GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
+//	}
+//}
+
+/**
+ * \brief       Global interrupt handler for USART2
+ */
+void USART1_IRQHandler(void) {
+    /* Check for IDLE flag */
+    if (USART1->SR & USART_FLAG_IDLE) {         /* We want IDLE flag only */
+        /* This part is important */
+        /* Clear IDLE flag by reading status register first */
+        /* And follow by reading data register */
+        volatile uint32_t tmp;                  /* Must be volatile to prevent optimizations */
+        tmp = USART1->SR;                       /* Read status register */
+        tmp = USART1->DR;                       /* Read data register */
+        (void)tmp;                              /* Prevent compiler warnings */
+        DMA2_Stream5->CR &= ~DMA_SxCR_EN;       /* Disabling DMA will force transfer complete interrupt if enabled */
+    }
+}
+
+/**
+ * \brief       Global interrupt handler for DMA1 stream5
+ * \note        Except memcpy, there is no functions used to
+ */
+void DMA2_Stream5_IRQHandler(void) {
+
 }

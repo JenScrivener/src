@@ -146,13 +146,27 @@ void initUART1(void){
 
 	USART_InitStruct.USART_BaudRate=9600;
 	USART_InitStruct.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
-	USART_InitStruct.USART_Mode=USART_Mode_Rx;
+	USART_InitStruct.USART_Mode=USART_Mode_Tx;
 	USART_InitStruct.USART_Parity=USART_Parity_No;
 	USART_InitStruct.USART_StopBits=USART_StopBits_1;
 	USART_InitStruct.USART_WordLength=USART_WordLength_8b;
 	USART_Init(USART1, &USART_InitStruct);
-
 	USART_Cmd(USART1, ENABLE);
+
+	char frequency [60] = "$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D";
+	for(int x=0;x<strlen(frequency);x++){
+		USART2->DR=frequency[x];
+		while(!(USART2->SR & USART_FLAG_TXE));
+	}
+	USART2->DR=13;
+	while(!(USART2->SR & USART_FLAG_TXE));
+	USART2->DR=10;
+	while(!(USART2->SR & USART_FLAG_TXE));
+
+	burstSerial(&frequency[0],strlen(frequency));
+
+	USART_InitStruct.USART_Mode=USART_Mode_Rx;
+	USART_Init(USART1, &USART_InitStruct);
 
     /* Add IRQ vector to NVIC */
     NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
@@ -167,9 +181,31 @@ void initUART1(void){
 
 	USART1->CR1|= USART_CR1_RXNEIE;
 
-//	DMA_InitStruct.DMA_Channel=DMA_Channel_4;
+	DMA_InitStruct.DMA_Channel=DMA_Channel_4;
 //	DMA_InitStruct.DMA_Memory0BaseAddr=(uint32_t)buffer;
-//	DMA_InitStruct.DMA_PeripheralBaseAddr
+	DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)(uint32_t)&USART1->DR;
+	DMA_InitStruct.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStruct.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralToMemory;
+	DMA_InitStruct.DMA_Mode = DMA_Mode_Normal;
+	DMA_InitStruct.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStruct.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStruct.DMA_BufferSize = 256;
+	DMA_InitStruct.DMA_Priority = DMA_Priority_High;
+	DMA_InitStruct.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+	DMA_InitStruct.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+	DMA_InitStruct.DMA_FIFOMode = DMA_FIFOMode_Disable;
+
+	DMA_Init(DMA2_Stream5, &DMA_InitStruct);
+
+	NVIC_InitStruct.NVIC_IRQChannel = DMA2_Stream5_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
+
+    DMA_ITConfig(DMA2_Stream5, DMA_IT_TC, ENABLE);
+    DMA_Cmd(DMA2_Stream5, ENABLE);
 }
 
 void initUART2(void){
