@@ -124,7 +124,6 @@ void initUART1(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	USART_InitTypeDef USART_InitStruct;
 	NVIC_InitTypeDef NVIC_InitStruct;
-	DMA_InitTypeDef DMA_InitStruct;
 
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
@@ -167,9 +166,7 @@ void initUART1(void){
 
 	USART1->CR1|= USART_CR1_RXNEIE;
 
-//	DMA_InitStruct.DMA_Channel=DMA_Channel_4;
-//	DMA_InitStruct.DMA_Memory0BaseAddr=(uint32_t)buffer;
-//	DMA_InitStruct.DMA_PeripheralBaseAddr
+
 }
 
 void initUART2(void){

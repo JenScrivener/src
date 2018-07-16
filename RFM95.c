@@ -552,8 +552,7 @@ void EXTI2_IRQHandler(void){
 			RSSI=rssi_temp-157;
 			burstSerial((char*)buf2,len-4);
 			char serial[40]={0};
-//			sprintf(serial, "My RSSI was %d",RSSI);
-			sprintf(serial, "Jen loves Yu so so so much!!");
+			sprintf(serial, "My RSSI was %d",RSSI);
 			burstSerial(&serial[0], strlen(serial));
 			GPIO_ToggleBits(GPIOD,GPIO_Pin_12);
 			GPIO_ToggleBits(GPIOD,GPIO_Pin_13);
@@ -625,22 +624,58 @@ void Hop (void){
 //	burstSerial(&serial[0], strlen(serial));
 }
 
+//void EXTI0_IRQHandler(void) {
+//	char serial[40];
+//	char data[40];
+//	sprintf(data, "Hello World, Test, Testing 1");
+//
+//	for(int x=0;x<4;x++){
+//		serial[x]=1;
+//	}
+//	serial[0]=(char)ADDRESS;
+//	for(int x=4;x<40;x++){
+//		serial[x]=data[x-4];
+//	}
+//
+//	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
+//	EXTI_ClearFlag(EXTI_Line0);
+//}
+
 void EXTI0_IRQHandler(void) {
-	char serial[40];
-	char data[40];
-	sprintf(data, "Hello World, Test, Testing 1");
 
-	for(int x=0;x<4;x++){
-		serial[x]=1;
-	}
-	serial[0]=(char)ADDRESS;
-	for(int x=4;x<40;x++){
-		serial[x]=data[x-4];
-	}
+//	for(int x=0; x<100;x++){
+//		USART1->CR1&=0b1111111111111011;
+//		USART1->CR1|=USART_CR1_TE;
+//
+//		char setup[60] ="$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D";
+//
+//		for(int x=0;x< strlen(setup);x++){
+//			USART1->DR=setup[x];
+//			while( !(USART1->SR & USART_FLAG_TXE) );
+//		}
+//		USART1->DR=13;
+//		while( !(USART1->SR & USART_FLAG_TXE) );
+//		USART1->DR=10;
+//		while( !(USART1->SR & USART_FLAG_TXE) );
+//
+//		for(int x=0;x< strlen(setup);x++){
+//			USART2->DR=setup[x];
+//			while( !(USART2->SR & USART_FLAG_TXE) );
+//		}
+//		USART2->DR=13;
+//		while( !(USART2->SR & USART_FLAG_TXE) );
+//		USART2->DR=10;
+//		while( !(USART2->SR & USART_FLAG_TXE) );
+//
+//		USART1->CR1&=0b1111111111110111;
+//		USART1->CR1|=USART_CR1_RE;
+//
+//	}
 
-	RFM95_LoRa_Test_Send2((uint8_t*)&serial,strlen(serial));
 	EXTI_ClearFlag(EXTI_Line0);
 }
+
+
 
 void USART1_IRQHandler(void){
 	if(USART_GetITStatus(USART1,USART_IT_RXNE)){

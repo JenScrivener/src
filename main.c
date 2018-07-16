@@ -18,6 +18,8 @@ int main(void){
 	init();
 	RFM95_LoRa_Init2(915.25, 30, RFM95_CODING_RATE_4_8, RFM95_SPREADING_FACTOR_4096CPS, RFM95_BW_500KHZ, 15);
 
+//	$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D
+
 //	ping();
 	ping2();
 
