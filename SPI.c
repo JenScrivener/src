@@ -145,13 +145,29 @@ void initUART1(void){
 
 	USART_InitStruct.USART_BaudRate=9600;
 	USART_InitStruct.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
-	USART_InitStruct.USART_Mode=USART_Mode_Rx;
+	USART_InitStruct.USART_Mode=USART_Mode_Tx;
 	USART_InitStruct.USART_Parity=USART_Parity_No;
 	USART_InitStruct.USART_StopBits=USART_StopBits_1;
 	USART_InitStruct.USART_WordLength=USART_WordLength_8b;
 	USART_Init(USART1, &USART_InitStruct);
 
 	USART_Cmd(USART1, ENABLE);
+
+	char setup[60] ="$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D";
+
+	for(int x=0;x< strlen(setup);x++){
+		USART1->DR=setup[x];
+		while( !(USART1->SR & USART_FLAG_TXE) );
+	}
+	USART1->DR=13;
+	while( !(USART1->SR & USART_FLAG_TXE) );
+	USART1->DR=10;
+	while( !(USART1->SR & USART_FLAG_TXE) );
+	USART1->DR=10; //The last character is corrupted unless you do the proper wait. Instead of doing the proper wait I added an extra character
+	while( !(USART1->SR & USART_FLAG_TXE) );
+
+	USART1->CR1&=0b1111111111110111;
+	USART1->CR1|=USART_CR1_RE;
 
     /* Add IRQ vector to NVIC */
     NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;

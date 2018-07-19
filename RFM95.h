@@ -64,6 +64,9 @@ void Clear_Flags1(void);
 void Clear_Flags2(void);
 void USART1_IRQHandler(void);
 
+void initRTC(void);
+void loadTime(int hour,int min,int sec, int pm);
+
 void ping(void);
 void ping2(void);
 

@@ -643,39 +643,66 @@ void Hop (void){
 
 void EXTI0_IRQHandler(void) {
 
-//	for(int x=0; x<100;x++){
-//		USART1->CR1&=0b1111111111111011;
-//		USART1->CR1|=USART_CR1_TE;
-//
-//		char setup[60] ="$PMTK314,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*2D";
-//
-//		for(int x=0;x< strlen(setup);x++){
-//			USART1->DR=setup[x];
-//			while( !(USART1->SR & USART_FLAG_TXE) );
-//		}
-//		USART1->DR=13;
-//		while( !(USART1->SR & USART_FLAG_TXE) );
-//		USART1->DR=10;
-//		while( !(USART1->SR & USART_FLAG_TXE) );
-//
-//		for(int x=0;x< strlen(setup);x++){
-//			USART2->DR=setup[x];
-//			while( !(USART2->SR & USART_FLAG_TXE) );
-//		}
-//		USART2->DR=13;
-//		while( !(USART2->SR & USART_FLAG_TXE) );
-//		USART2->DR=10;
-//		while( !(USART2->SR & USART_FLAG_TXE) );
-//
-//		USART1->CR1&=0b1111111111110111;
-//		USART1->CR1|=USART_CR1_RE;
-//
-//	}
+	char serial[40];
+	RTC_TimeTypeDef RTC_TimeStruct;
+	RTC_GetTime(RTC_Format_BIN, &RTC_TimeStruct);
+	sprintf(serial, "Time is %d:%d.%d",RTC_TimeStruct.RTC_Hours,RTC_TimeStruct.RTC_Minutes,RTC_TimeStruct.RTC_Seconds);
+	burstSerial(&serial[0], strlen(serial));
 
 	EXTI_ClearFlag(EXTI_Line0);
 }
 
+void initRTC(void){
 
+	//Enable Back up domain write access
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR,ENABLE);
+	PWR_BackupAccessCmd(ENABLE);
+
+	//Reset Back up domain
+	RCC->BDCR |= RCC_BDCR_BDRST;
+	RCC->BDCR &=!RCC_BDCR_BDRST;
+
+	//Turn on the Low speed internal oscillator
+	RCC->CSR |= RCC_CSR_LSION;
+	while(!(RCC->CSR&RCC_CSR_LSIRDY));
+
+	//Set RTCCLK to LSI
+	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSI);
+	//Enable RTC
+	RCC_RTCCLKCmd(ENABLE);
+
+	//Disable write protection
+	RTC_WriteProtectionCmd(DISABLE);
+
+	//Enter initialization mode
+	RTC->ISR |= RTC_ISR_INIT;
+	while(!(RTC->ISR&RTC_ISR_INITF));
+
+	//Set date and time
+	RTC_InitTypeDef RTC_InitStruct;
+	RTC_InitStruct.RTC_HourFormat=RTC_HourFormat_24;
+	RTC_Init(&RTC_InitStruct);
+
+	RTC_TimeTypeDef RTC_TimeStruct;
+	RTC_TimeStruct.RTC_H12=RTC_H12_AM;
+	RTC_TimeStruct.RTC_Hours=8;
+	RTC_TimeStruct.RTC_Minutes=0;
+	RTC_TimeStruct.RTC_Seconds=0;
+	RTC_SetTime(RTC_Format_BIN,&RTC_TimeStruct);
+
+	RTC_DateTypeDef RTC_DateStruct;
+	RTC_DateStruct.RTC_Date=1;
+	RTC_DateStruct.RTC_Month=RTC_Month_January;
+	RTC_DateStruct.RTC_Year=18;
+	RTC_DateStruct.RTC_WeekDay=RTC_Weekday_Monday;
+	RTC_SetDate(RTC_Format_BCD,&RTC_DateStruct);
+
+	//Exit initialization mode
+	RTC->ISR &=!RTC_ISR_INIT;
+
+	//Enable write protection
+	RTC_WriteProtectionCmd(ENABLE);
+}
 
 void USART1_IRQHandler(void){
 	if(USART_GetITStatus(USART1,USART_IT_RXNE)){
