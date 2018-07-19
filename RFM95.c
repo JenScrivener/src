@@ -652,6 +652,52 @@ void EXTI0_IRQHandler(void) {
 	EXTI_ClearFlag(EXTI_Line0);
 }
 
+void initTimer(void){
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+
+	TIM_RemapConfig(TIM5, TIM5_LSI);
+
+	TIM_PrescalerConfig(TIM5, 0, TIM_PSCReloadMode_Immediate);
+
+	TIM_ICInitTypeDef TIM_ICInitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+	RCC_ClocksTypeDef  RCC_ClockFreq;
+
+	TIM_ICInitStructure.TIM_Channel = TIM_Channel_4;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
+	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV8;
+	TIM_ICInitStructure.TIM_ICFilter = 0xF;
+	TIM_ICInit(TIM5, &TIM_ICInitStructure);
+
+	NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	/* Enable TIM5 counter */
+	TIM_Cmd(TIM5, ENABLE);
+
+	/* Reset the flags */
+	TIM5->SR = 0;
+
+	/* Enable the CC4 Interrupt Request */
+	TIM_ITConfig(TIM5, TIM_IT_CC4, ENABLE);
+
+//	TIM5->ARR = 0;
+}
+
+void TIM5_IRQHandler(void){
+
+	char serial[40];
+	sprintf(serial,"Working, %d",(int)(TIM5->CCR4));
+	burstSerial(&serial[0], strlen(serial));
+	TIM5->CNT=0;
+	TIM_ClearFlag(TIM5,TIM_FLAG_CC4);
+}
+
 void initRTC(void){
 
 	//Enable Back up domain write access
@@ -697,11 +743,16 @@ void initRTC(void){
 	RTC_DateStruct.RTC_WeekDay=RTC_Weekday_Monday;
 	RTC_SetDate(RTC_Format_BCD,&RTC_DateStruct);
 
+//	RTC_AlarmTypeDef RTC_AlarmStruct;
+//	RTC_AlarmStruct.RTC_AlarmTime = RTC_TimeStruct;
+
 	//Exit initialization mode
 	RTC->ISR &=!RTC_ISR_INIT;
 
 	//Enable write protection
 	RTC_WriteProtectionCmd(ENABLE);
+
+
 }
 
 void USART1_IRQHandler(void){

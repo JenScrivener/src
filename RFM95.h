@@ -67,6 +67,10 @@ void USART1_IRQHandler(void);
 void initRTC(void);
 void loadTime(int hour,int min,int sec, int pm);
 
+void initTimer(void);
+
+void TIM5_IRQHandler(void);
+
 void ping(void);
 void ping2(void);
 
